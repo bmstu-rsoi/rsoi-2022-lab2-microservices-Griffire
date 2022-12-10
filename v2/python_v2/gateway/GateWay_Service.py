@@ -38,7 +38,7 @@ class MyEncoder(JSONEncoder):
 
 @app.get("/api/v1/hotels")
 def get_hotels_page(page: int, size: int):
-    inp_post_response = http_req.get('http://localhost:8070/api/v1/hotels/')
+    inp_post_response = http_req.get('http://reservation:8070/api/v1/hotels/')
     hotel_row = inp_post_response.json()
     headers = {'Content-Type': 'application/json'}
     hotel_res = {'page': 1, 'pageSize': 1, 'totalElements': len(hotel_row), 'items': hotel_row}
@@ -49,14 +49,14 @@ def get_hotels_page(page: int, size: int):
 def post_reservations(request: Request, item: PostHotelReserve):
     username_from_header = request.headers.get('X-User-Name')
     if username_from_header is not None:
-        inp_post_response = http_req.get('http://localhost:8070/api/v1/hotels/', headers={"hotelUid": item.hotelUid})
+        inp_post_response = http_req.get('http://reservation:8070/api/v1/hotels/', headers={"hotelUid": item.hotelUid})
         if inp_post_response.status_code != 404:
             hotel_row = inp_post_response.json()
             if len(hotel_row) > 0:
                 hotel = hotel_row[0]
                 nights = (item.endDate - item.startDate).days
                 price = nights * hotel['price']
-                inp_post_response = http_req.get('http://localhost:8050/api/v1/loyalty/',
+                inp_post_response = http_req.get('http://loyalty:8050/api/v1/loyalty/',
                                                  headers={"user_name": username_from_header})
                 if inp_post_response.status_code != 404:
                     loyalty_row = inp_post_response.json()
@@ -68,9 +68,9 @@ def post_reservations(request: Request, item: PostHotelReserve):
                         discount = ''
 
                     paymentUid = str(uuid.uuid4())
-                    http_req.post('http://localhost:8060/api/v1/payments/',
+                    http_req.post('http://payment:8060/api/v1/payments/',
                                   headers={'paymentUid': paymentUid, "price": str(price), 'status': 'PAID'})
-                    inp_post_response = http_req.get('http://localhost:8060/api/v1/payments/',
+                    inp_post_response = http_req.get('http://payment:8060/api/v1/payments/',
                                                      headers={"payment_uid": paymentUid})
                     if inp_post_response.status_code != 404:
                         payment_elem = inp_post_response.json()
@@ -79,7 +79,7 @@ def post_reservations(request: Request, item: PostHotelReserve):
                         hotel['status'] = 'PAID'
 
                     reservationUid = str(uuid.uuid4())
-                    req = http_req.post('http://localhost:8070/api/v1/reservations/',
+                    req = http_req.post('http://reservation:8070/api/v1/reservations/',
                                         headers={'reservation_uid': reservationUid, "username": username_from_header,
                                                  'payment_uid': paymentUid, 'hotel_id': str(hotel['id']),
                                                  'status': 'PAID',
@@ -100,13 +100,13 @@ def post_reservations(request: Request, item: PostHotelReserve):
                                 loyalty['status'] = 'GOLD'
                                 loyalty['discount'] = 10
 
-                        req = http_req.patch('http://localhost:8050/api/v1/loyalty/', headers={
+                        req = http_req.patch('http://loyalty:8050/api/v1/loyalty/', headers={
                             'user_name': username_from_header, 'reservation_count': str(loyalty['reservationCount']),
                             'status': loyalty['status'], 'discount': str(loyalty['discount']),
                         })
                         print(req.status_code)
 
-                    # inp_post_response = http_req.get('http://localhost:8070/api/v1/reservation/',
+                    # inp_post_response = http_req.get('http://reservation:8070/api/v1/reservation/',
                     #                                  headers={"reservationUid": reservationUid})
                     # if inp_post_response.status_code != 404:
                     #     reserve_elem = inp_post_response.json()
@@ -123,23 +123,23 @@ def get_me(request: Request):
     if username_from_header is not None:
         info = {}
         print(username_from_header)
-        inp_post_response = http_req.get('http://localhost:8050/api/v1/loyalty/', headers={"user_name": username_from_header})
+        inp_post_response = http_req.get('http://loyalty:8050/api/v1/loyalty/', headers={"user_name": username_from_header})
         if inp_post_response.status_code != 404:
             loyalty = inp_post_response.json()[0]
             info['loyalty'] = loyalty
 
-        inp_post_response = http_req.get('http://localhost:8070/api/v1/reservations/', headers={"user_name": username_from_header})
+        inp_post_response = http_req.get('http://reservation:8070/api/v1/reservations/', headers={"user_name": username_from_header})
         if inp_post_response.status_code != 404:
             reservations = inp_post_response.json()
             for r in reservations:
-                inp_post_response = http_req.get('http://localhost:8070/api/v1/hotels/', headers={"hotel_id": str(r['hotel_id'])})
+                inp_post_response = http_req.get('http://reservation:8070/api/v1/hotels/', headers={"hotel_id": str(r['hotel_id'])})
                 hotel = inp_post_response.json()
                 hotel[0]['fullAddress'] = hotel[0]['country'] + ', ' + hotel[0]['city'] + ', ' +  hotel[0]['address']
 
                 r['hotel'] = hotel[0]
 
                 print('pay', r['payment_uid'])
-                inp_post_response = http_req.get('http://localhost:8060/api/v1/payments/',
+                inp_post_response = http_req.get('http://payment:8060/api/v1/payments/',
                                                  headers={"payment_uid": r['payment_uid']})
                 payment = inp_post_response.json()
                 r['payment'] = payment[0]
@@ -162,7 +162,7 @@ def get_reservations(request: Request):
     if username_from_header is not None:
         print('nachali2')
         print(username_from_header)
-        inp_post_response = http_req.get('http://localhost:8070/api/v1/reservations/',
+        inp_post_response = http_req.get('http://reservation:8070/api/v1/reservations/',
                                          headers={'user_name': username_from_header})
         print('nachali3')
         if inp_post_response.status_code != 404:
@@ -171,14 +171,14 @@ def get_reservations(request: Request):
             print(reservations_row)
             for i in reservations_row:
 
-                inp_post_response = http_req.get('http://localhost:8070/api/v1/hotels/',
+                inp_post_response = http_req.get('http://reservation:8070/api/v1/hotels/',
                                                  headers={"hotel_id": str(i['hotel_id'])})
                 hotel_row = inp_post_response.json()
                 hotel_row[0]['fullAddress'] = hotel_row[0]['country'] + ', ' + hotel_row[0]['city'] + ', ' +  hotel_row[0]['address']
                 print(i['hotel_id'])
 
                 payment_uid = i['payment_uid']
-                inp_post_response = http_req.get('http://localhost:8060/api/v1/payments/',
+                inp_post_response = http_req.get('http://payment:8060/api/v1/payments/',
                                                  headers={"paymentUid": payment_uid})
                 payment_row = inp_post_response.json()
                 print(payment_row)
@@ -204,7 +204,7 @@ def get_reservations(request: Request):
 def get_loyalty(request: Request):
     username_from_header = request.headers.get('X-User-Name')
     if username_from_header is not None:
-        inp_post_response = http_req.get('http://localhost:8050/api/v1/loyalty/',
+        inp_post_response = http_req.get('http://loyalty:8050/api/v1/loyalty/',
                                          headers={"user_name": username_from_header})
         if inp_post_response.status_code != 404:
             loyalty_row = inp_post_response.json()
@@ -219,7 +219,7 @@ def get_reservation(request: Request, reservationUid: str):
     if username_from_header is not None:
         print('nachali2')
         print(username_from_header)
-        inp_post_response = http_req.get('http://localhost:8070/api/v1/reservations/',
+        inp_post_response = http_req.get('http://reservation:8070/api/v1/reservations/',
                                          headers={'reservationUid': reservationUid})
         print('nachali3')
         if inp_post_response.status_code != 404:
@@ -227,7 +227,7 @@ def get_reservation(request: Request, reservationUid: str):
             reservations_row = inp_post_response.json()
             print(reservations_row)
             for i in reservations_row:
-                inp_post_response = http_req.get('http://localhost:8070/api/v1/hotels/',
+                inp_post_response = http_req.get('http://reservation:8070/api/v1/hotels/',
                                                  headers={"hotel_id": str(i['hotel_id'])})
                 hotel_row = inp_post_response.json()
                 hotel_row[0]['fullAddress'] = hotel_row[0]['country'] + ', ' + hotel_row[0]['city'] + ', ' + \
@@ -235,7 +235,7 @@ def get_reservation(request: Request, reservationUid: str):
                 print(i['hotel_id'])
 
                 payment_uid = i['payment_uid']
-                inp_post_response = http_req.get('http://localhost:8060/api/v1/payments/',
+                inp_post_response = http_req.get('http://payment:8060/api/v1/payments/',
                                                  headers={"payment_uid": payment_uid})
                 payment_row = inp_post_response.json()
                 print(payment_row)
@@ -258,7 +258,7 @@ def get_reservation(request: Request, reservationUid: str):
     if username_from_header is not None:
         print('nachali2')
         print(username_from_header)
-        inp_post_response = http_req.get('http://localhost:8070/api/v1/reservations/',
+        inp_post_response = http_req.get('http://reservation:8070/api/v1/reservations/',
                                          headers={'reservationUid': reservationUid})
         print('nachali3')
         if inp_post_response.status_code != 404:
@@ -266,12 +266,12 @@ def get_reservation(request: Request, reservationUid: str):
             reservations_row = inp_post_response.json()
             reservation = reservations_row[0]
             payment_uid = reservation['payment_uid']
-            http_req.delete('http://localhost:8060/api/v1/payments/delete', headers={"paymentUid": payment_uid})
-            http_req.delete('http://localhost:8070/api/v1/reservations/', headers={"reservationUid": reservationUid})
+            http_req.delete('http://payment:8060/api/v1/payments/delete', headers={"paymentUid": payment_uid})
+            http_req.delete('http://reservation:8070/api/v1/reservations/', headers={"reservationUid": reservationUid})
 
             reservation['status'] = 'CANCELED'
 
-            inp_post_response = http_req.get('http://localhost:8050/api/v1/loyalty/',
+            inp_post_response = http_req.get('http://loyalty:8050/api/v1/loyalty/',
                                              headers={"user_name": username_from_header})
             loyalty = inp_post_response.json()[0]
             print(loyalty)
@@ -288,7 +288,7 @@ def get_reservation(request: Request, reservationUid: str):
                     loyalty['status'] = 'GOLD'
                     loyalty['discount'] = 10
             #
-            req = http_req.patch('http://localhost:8050/api/v1/loyalty/', headers={
+            req = http_req.patch('http://loyalty:8050/api/v1/loyalty/', headers={
                 'user_name': username_from_header, 'reservation_count': str(loyalty['reservationCount']),
                 'status': loyalty['status'], 'discount': str(loyalty['discount']),
             })

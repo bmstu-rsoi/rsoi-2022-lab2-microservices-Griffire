@@ -13,8 +13,6 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./postgres/:/docker-entrypoint-initdb.d/
-    ports:
-      - "5432:5432"
 
 #  pgadmin:
 #    image: chorss/docker-pgadmin4
@@ -23,7 +21,7 @@ services:
 #
   gateway:
     build: v2/python_v2/gateway
-    network_mode: host
+#    network_mode: host
     ports:
       - "8080:8080"
     depends_on:
@@ -32,27 +30,24 @@ services:
 
   loyalty:
     build: v2/python_v2/loyalty
-    network_mode:  host
-    ports:
-      - "8050:8050"
+#    network_mode:  host
+
     depends_on:
       - postgres
 
 #
   payment:
       build: v2/python_v2/payment
-      network_mode: host
-      ports:
-        - "8060:8060"
+#      network_mode: host
+     
       depends_on:
         - postgres
 
 #
   reservation:
          build: v2/python_v2/reservation
-         network_mode: host
-         ports:
-           - "8070:8070"
+#         network_mode: host
+    
          depends_on:
            - postgres
 #

@@ -35,6 +35,11 @@ class MyEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
 
+@app.get("/manage/health")
+def get_hotels_page():
+    headers = {'Content-Type': 'application/json'}
+    return JSONResponse(content="Host localhost:8080 is active", headers=headers, status_code=status.HTTP_200_OK)
+
 
 @app.get("/api/v1/hotels")
 def get_hotels_page(page: int, size: int):

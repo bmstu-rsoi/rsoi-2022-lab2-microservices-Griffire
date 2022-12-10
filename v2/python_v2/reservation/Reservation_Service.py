@@ -36,6 +36,10 @@ def start_DB():
         cur.execute(sqlFile_reservation_and_hotels_start)
         conn.commit()
 
+@app.get("/manage/health")
+def get_hotels_page():
+    headers = {'Content-Type': 'application/json'}
+    return JSONResponse(content="Host localhost:8070 is active", headers=headers, status_code=status.HTTP_200_OK)
 
 
 @app.get("/api/v1/check")

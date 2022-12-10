@@ -27,7 +27,7 @@ jobs:
         timeout-minutes: 5
         run: |
           docker-compose up -d
-          sleep 30
+          sleep 60
           docker-compose logs
           ./scripts/wait-script.sh
           

@@ -30,6 +30,18 @@ services:
       - postgres
       
 
+
+  reservation:
+    build: v2/python_v2/gateway
+    #    network_mode: host
+    ports:
+      - "8070:8070"
+    depends_on:
+      - postgres
+      
+      
+     
+
   loyalty:
     build: v2/python_v2/loyalty
 #    network_mode:  host
@@ -48,15 +60,7 @@ services:
         - postgres
 
 #
-  reservation:
-         build: v2/python_v2/reservation
-#         network_mode: host
-         ports:
-           - "8070:8070"
-         depends_on:
-           - postgres
-#
-#
+
 
     
      
